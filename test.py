@@ -26,15 +26,13 @@ def getTweet(res, start_time, reset):
     # 応答tweet抽出取得                                                        *
     #                                                                          *
     # --------------------------------------------------------------------------*
-    for tweet in res_text['statuses']:
+    for tweet in res_text:
         status_id = tweet['in_reply_to_status_id_str']
         tweet_id = tweet['id']                  # 応答tweetのid
 
         if status_id != None:               # 当該tweetが応答かどうかの判断
 
             tweet_time = tweet_id2time(tweet_id)
-            if tweet_time <= start_time:    # 前回処理より新しいtweetのみ処理する
-                continue
 
             if max_tweet < tweet_time:
                 max_tweet = tweet_time
@@ -321,17 +319,39 @@ if __name__ == '__main__':
     cnt = 0
     unavailableCnt = 0
     url = 'https://api.twitter.com/1.1/search/tweets.json'
+    url2 ='https://api.twitter.com/1.1/statuses/lookup.json'
 
     start_time = 1288834974657
+    latest_id = -1
     while True:
         # ----------------
         # 回数制限を確認
         # ----------------
         #
+        kusorep_list = []
         reset = checkLimit(session)
         get_time = time.mktime(datetime.datetime.now().timetuple())  # getの時刻取得
         try:
-            res = session.get(url, params={'q': args[1], 'count': 100})
+            params = {'q': 'クソリプ乙', 'count': 100, 'max_id':latest_id}  #取得数
+            res = session.get(url, params=params)
+            
+            if res.status_code == 200:  #正常通信出来た場合
+                timelines = res.json()['statuses']  #レスポンスからタイムラインリストを取得
+                for line in timelines:  #タイムラインリストをループ処理
+                    kusorep_id = line['in_reply_to_status_id']
+                    latest_id = line['id']
+                    kusorep_list.append(kusorep_id)
+
+            else:  #正常通信出来なかった場合
+                print("Failed: %d" % res.status_code)
+
+            kusorep_id_list = ""
+            for i in range(len(kusorep_list)):
+                kusorep_id_list +=  str(kusorep_list[i])
+                kusorep_id_list += ','
+                #133229402367597363
+            res = session.get(url2, params={'id': kusorep_id_list, 'count': len(kusorep_list)})
+            
         except SocketError as e:
             print('ソケットエラー errno=', e.errno)
             if unavailableCnt > 10:
