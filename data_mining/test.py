@@ -320,6 +320,16 @@ if __name__ == '__main__':
     unavailableCnt = 0
     url = 'https://api.twitter.com/1.1/search/tweets.json'
     url2 ='https://api.twitter.com/1.1/statuses/lookup.json'
+    searchwords = ""
+    kusorep_inits = ["クソリプ","糞リプ"]
+    kusorep_ends = ["乙","おつ","お疲れ","おつかれ","お疲れ様","だよ","死ね","だね"]
+    test = 'クソリプ乙 OR クソリプおつ OR クソリプお疲れ OR クソリプおつかれ OR クソリプお疲れ様 OR クソリプだよ OR クソリプ死ね OR クソリプだね OR 糞リプ乙 OR 糞リプおつ OR 糞リプお疲れ OR 糞リプおつかれ OR 糞リプお疲れ様 OR 糞リプだよ OR 糞リプ死ね OR 糞リプだね'
+    for kusorep_init in kusorep_inits:
+        for kusorep_end in kusorep_ends:
+            if kusorep_init == "クソリプ" and kusorep_end == "乙":
+                searchwords=searchwords+kusorep_init+kusorep_end
+            else:
+                searchwords=searchwords+" OR "+kusorep_init+kusorep_end
 
     start_time = 1288834974657
     latest_id = -1
@@ -328,11 +338,12 @@ if __name__ == '__main__':
         # 回数制限を確認
         # ----------------
         #
+        
         kusorep_list = []
         reset = checkLimit(session)
         get_time = time.mktime(datetime.datetime.now().timetuple())  # getの時刻取得
         try:
-            params = {'q': 'クソリプ乙', 'count': 100, 'max_id':latest_id}  #取得数
+            params = {'q': test, 'count': 100, 'max_id':latest_id}  #取得数
             res = session.get(url, params=params)
             
             if res.status_code == 200:  #正常通信出来た場合
