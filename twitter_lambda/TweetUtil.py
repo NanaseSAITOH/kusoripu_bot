@@ -1,6 +1,7 @@
 from requests_oauthlib import OAuth1Session
 import urllib.request
 import json
+import boto3
 
 
 class TweetUtil():
@@ -15,7 +16,7 @@ class TweetUtil():
                              816932493962031104, 4444885817, 2799898254, 3282531025]
 
     def get_timeline(self):
-        url = "https://api.twitter.com/1.1/statuses/home_timeline.json"
+        url = "https://api.twitter.com/1.1/statuses/home_timeline.json?count=200"
         res = self.session.get(url=url)
         tweet_id_list = []
         tweet_text_list = []
@@ -33,20 +34,30 @@ class TweetUtil():
         return
 
     def excute_reply(self, tweet_text, tweet_id):
-        transformer_url = "http://3.139.162.86:80/predict?sentence=" + \
-            urllib.parse.quote(tweet_text)
-        req = urllib.request.Request(transformer_url)
-        with urllib.request.urlopen(req) as res:
-            res_json = res.read().decode('utf-8')
-        res_json = json.loads(res_json)
-        reply = res_json["decode_sentence"]
+        input_event = {
+        "text": tweet_text
+        }
+        Payload = json.dumps(input_event)
+        res = boto3.client('lambda').invoke(
+            FunctionName='kusoripu_function3',
+            InvocationType='RequestResponse', # Event or RequestResponse
+            Payload=Payload
+            )
+        payload = res['Payload'].read().decode('utf-8')
+        
+        json_load = json.loads(payload)
+        reply = json_load['body']
+        json_load = json.loads(reply)
+        reply = json_load['decode_sentence']
+        
+        print("decode_sentence:", reply)
 
         url = "https://api.twitter.com/1.1/statuses/update.json"
         params = {"status": reply, "in_reply_to_status_id": tweet_id,
                   "auto_populate_reply_metadata": True}
 
-        reqest = self.session.post(url, params=params)
-        if reqest.status_code == 200:
+        response = self.session.post(url, params=params)
+        if response.status_code == 200:
             print("Succeed!")
         else:
             print("ERROR : %d" % reqest.status_code)
