@@ -1,0 +1,21 @@
+service: auto-deploy-lambda
+provider:
+  name: aws
+  region: us-east-2
+  timeout: 120
+  role: ${env:AWS_LAMBDA_ROLE_ARN}
+  stage: prod
+
+  environment:
+    SLACK_WEBHOOK: ${env:SLACK_WEBHOOK}
+
+package:
+  exclude:
+    - Dockerfile
+    - docker-compose.yml
+
+functions:
+  slack:
+    handler: src/index.post
+    description: "Post message to Slack"
+    timeout: 60
