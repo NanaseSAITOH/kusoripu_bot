@@ -1,0 +1,11 @@
+# .txtは容量オーバになるのでいらない
+*.txt
+# caheもいらない
+*.pyc
+# ptは容量オーバー
+*.pt
+# DS_STOREも不要
+*.DS_STORE
+*.DS_Store
+
+*.zip
